@@ -26,7 +26,7 @@ class TagTransformer implements DataTransformerInterface
         foreach ($value as $tag) {
             $array[] = $tag->getName();
         }
-
+//dd(implode(',', $array));
         return implode(',', $array);
     }
 
@@ -51,6 +51,7 @@ class TagTransformer implements DataTransformerInterface
             $tags->add($tag);
         }
 
+//        dd($tags);
         return $tags;
     }
 }

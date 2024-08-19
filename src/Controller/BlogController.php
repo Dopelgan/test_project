@@ -7,6 +7,7 @@ use App\Filter\BlogFilter;
 use App\Form\BlogFilterType;
 use App\Form\BlogType;
 use App\Repository\BlogRepository;
+use App\Service\TextRuAPi;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -37,8 +38,11 @@ class BlogController extends AbstractController
         ]);
     }
 
+    /**
+     * @throws \Exception
+     */
     #[Route('/new', name: 'app_user_blog_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, TextRuAPi $textRuAPi): Response
     {
         $blog = new Blog($this->getUser());
         $form = $this->createForm(BlogType::class, $blog);
@@ -46,6 +50,10 @@ class BlogController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager->persist($blog);
+            $entityManager->flush();
+
+            $textUID = $textRuAPi->getTextUID($blog->getText());
+            $blog->setPercent($textRuAPi->checkTextUniq($textUID));
             $entityManager->flush();
 
             return $this->redirectToRoute('app_user_blog_index', [], Response::HTTP_SEE_OTHER);
@@ -80,7 +88,7 @@ class BlogController extends AbstractController
     #[Route('/{id}', name: 'app_user_blog_delete', methods: ['POST'])]
     public function delete(Request $request, Blog $blog, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$blog->getId(), $request->getPayload()->getString('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $blog->getId(), $request->getPayload()->getString('_token'))) {
             $entityManager->remove($blog);
             $entityManager->flush();
         }
